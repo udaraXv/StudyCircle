@@ -1,0 +1,356 @@
+<?php
+require_once __DIR__ . '/config/auth.php';
+$user = require_admin();
+
+$error = '';
+$success = $_SESSION['review_success'] ?? '';
+unset($_SESSION['review_success']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = filter_var(
+        $_POST['id'] ?? '',
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 1]]
+    );
+
+    $status = isset($_POST['status']) && is_string($_POST['status'])
+        ? $_POST['status']
+        : '';
+
+    if (!valid_csrf()) {
+        $error = 'Your form expired. Please refresh and try again.';
+    } elseif (
+        $id === false
+        || !in_array($status, ['approved', 'rejected', 'pending'], true)
+    ) {
+        $error = 'Invalid review request.';
+    } else {
+        try {
+            $check = $pdo->prepare(
+                'SELECT id FROM materials WHERE id = ?'
+            );
+            $check->execute([$id]);
+
+            if (!$check->fetch()) {
+                $error = 'This material no longer exists.';
+            } else {
+                $stmt = $pdo->prepare(
+                    'UPDATE materials SET status = ? WHERE id = ?'
+                );
+                $stmt->execute([$status, $id]);
+
+                $_SESSION['review_success'] =
+                    'Material status saved as ' . $status . '.';
+
+                header('Location: admin_materials.php');
+                exit;
+            }
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            $error = 'Unable to save your decision. Please try again.';
+        }
+    }
+}
+
+$search = isset($_GET['q']) && is_string($_GET['q'])
+    ? trim($_GET['q'])
+    : '';
+
+$search = mb_substr($search, 0, 150);
+
+$statusFilter = isset($_GET['status']) && is_string($_GET['status'])
+    ? $_GET['status']
+    : '';
+
+$allowedStatuses = ['pending', 'approved', 'rejected'];
+
+if (!in_array($statusFilter, $allowedStatuses, true)) {
+    $statusFilter = '';
+}
+
+$sql = "SELECT m.id, m.title, m.description, m.original_name,
+               m.file_size, m.status, m.created_at,
+               u.full_name AS uploader_name,
+               s.subject_code, s.subject_name,
+               c.name AS category_name
+        FROM materials m
+        JOIN users u ON u.id = m.uploaded_by
+        JOIN subjects s ON s.id = m.subject_id
+        JOIN categories c ON c.id = m.category_id
+        WHERE 1 = 1";
+
+$params = [];
+
+if ($search !== '') {
+    $term = '%' . str_replace(
+        ['!', '%', '_'],
+        ['!!', '!%', '!_'],
+        $search
+    ) . '%';
+
+    $sql .= " AND m.title LIKE ? ESCAPE '!'";
+    $params[] = $term;
+}
+
+if ($statusFilter !== '') {
+    $sql .= ' AND m.status = ?';
+    $params[] = $statusFilter;
+}
+
+$sql .= " ORDER BY
+            CASE WHEN m.status = 'pending' THEN 0 ELSE 1 END,
+            m.created_at DESC,
+            m.id DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$materials = $stmt->fetchAll();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Materials | NSBM StudyCircle</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--sc-bg);
+            color: var(--sc-text);
+            font-family: Arial, sans-serif;
+        }
+        header {
+            padding: 20px 6%;
+            background: var(--sc-surface);
+            border-bottom: 1px solid #dce9df;
+        }
+        a { color: var(--sc-accent); }
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        main {
+            max-width: 1000px;
+            margin: auto;
+            padding: 32px 20px;
+        }
+        p { line-height: 1.6; }
+        .card {
+            margin-top: 24px;
+            padding: 26px;
+            background: var(--sc-surface);
+            border: 1px solid #dce9df;
+            border-radius: 16px;
+            overflow-wrap: anywhere;
+        }
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .card-top h2 { margin: 0; }
+        .badge {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .pending { background: var(--sc-warning-bg); color: var(--sc-warning-text); }
+        .approved { background: var(--sc-success-bg); color: var(--sc-success-text); }
+        .rejected { background: var(--sc-error-bg); color: var(--sc-error-text); }
+        .details { color: var(--sc-muted); }
+        .download {
+            display: inline-block;
+            margin: 8px 0 20px;
+            font-weight: bold;
+        }
+        .review {
+            padding-top: 18px;
+            border-top: 1px solid #e2ece5;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        select, button {
+            padding: 12px;
+            border-radius: 8px;
+            font: inherit;
+        }
+        select {
+            border: 1px solid #b6cabb;
+            background: var(--sc-surface);
+            color: var(--sc-text);
+            max-width: 100%;
+        }
+        button {
+            border: 0;
+            background: var(--sc-button);
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: var(--sc-button-hover); }
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .success { background: var(--sc-success-bg); color: var(--sc-success-text); }
+        .error { background: var(--sc-error-bg); color: var(--sc-error-text); }
+    </style>
+    <link rel="stylesheet" href="theme.css?v=1">
+    <script src="theme.js?v=1"></script>
+    <link rel="stylesheet" href="branding.css?v=1">
+    <link rel="stylesheet" href="nsbm-professional.css?v=1">
+</head>
+<body>
+<header>
+    <a class="logo" href="admin_dashboard.php"><img class="header-nsbm-logo" src="assets/nsbm-logo.svg" alt="NSBM Green University Town"><span>StudyCircle Admin</span></a>
+<button type="button" class="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false" hidden>Dark mode</button>
+<a class="profile-chip" href="profile.php" aria-label="Open your profile" title="View profile">
+    <span class="profile-avatar" aria-hidden="true"><?= escape(mb_strtoupper(mb_substr($user['full_name'], 0, 1))) ?></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="profile-name">Profile</span>
+</a>
+</header>
+
+<main>
+    <form method="get" action="admin_materials.php" class="card">
+    <h2>Find materials</h2>
+
+    <label for="material_search">Search by title</label>
+    <input type="search"
+           id="material_search"
+           name="q"
+           value="<?= escape($search) ?>"
+           maxlength="150"
+           placeholder="Enter a material title">
+
+    <label for="status_filter">Material status</label>
+    <select id="status_filter" name="status">
+        <option value="">All statuses</option>
+
+        <option value="pending"
+            <?= $statusFilter === 'pending' ? 'selected' : '' ?>>
+            Pending
+        </option>
+
+        <option value="approved"
+            <?= $statusFilter === 'approved' ? 'selected' : '' ?>>
+            Approved
+        </option>
+
+        <option value="rejected"
+            <?= $statusFilter === 'rejected' ? 'selected' : '' ?>>
+            Rejected
+        </option>
+    </select>
+
+    <button type="submit">Search materials</button>
+    <a href="admin_materials.php">Clear filters</a>
+</form>
+    <a class="back-button" href="admin_dashboard.php"><span class="back-arrow" aria-hidden="true">&larr;</span> Back to dashboard</a>
+    <h1>Review study materials</h1>
+    <p>Download each submission to review it before approving.
+       Pending submissions appear first.</p>
+
+    <?php if ($success): ?>
+        <p class="message success" role="status">
+            <?= escape($success) ?>
+        </p>
+    <?php endif; ?>
+
+    <?php if ($error): ?>
+        <p class="message error" role="alert">
+            <?= escape($error) ?>
+        </p>
+    <?php endif; ?>
+
+    <?php if (!$materials): ?>
+        <section class="card">
+            <h2>No submissions yet</h2>
+            <p>Student uploads will appear here.</p>
+        </section>
+    <?php endif; ?>
+
+    <?php foreach ($materials as $material): ?>
+        <article class="card">
+            <div class="card-top">
+                <h2><?= escape($material['title']) ?></h2>
+                <span class="badge <?= escape($material['status']) ?>">
+                    <?= escape(ucfirst($material['status'])) ?>
+                </span>
+            </div>
+
+            <p class="details">
+                <strong>Uploaded by:</strong>
+                <?= escape($material['uploader_name']) ?><br>
+
+                <strong>Subject:</strong>
+                <?= escape($material['subject_code'] . ' — ' . $material['subject_name']) ?><br>
+
+                <strong>Category:</strong>
+                <?= escape($material['category_name']) ?><br>
+
+                <strong>File:</strong>
+                <?= escape($material['original_name']) ?>
+                (<?= number_format($material['file_size'] / 1024, 1) ?> KB)<br>
+
+                <strong>Submitted:</strong>
+                <?= escape($material['created_at']) ?>
+            </p>
+
+            <?php if ($material['description'] !== ''): ?>
+                <p><?= nl2br(escape($material['description'])) ?></p>
+            <?php endif; ?>
+
+            <a class="download"
+               href="download_material.php?id=<?= (int) $material['id'] ?>">
+                Download PDF for review
+            </a>
+
+            <form class="review" method="post" action="admin_materials.php">
+                <input type="hidden" name="csrf_token"
+                       value="<?= escape(csrf_token()) ?>">
+                <input type="hidden" name="id"
+                       value="<?= (int) $material['id'] ?>">
+
+                <label for="status-<?= (int) $material['id'] ?>">
+                    Review decision
+                </label>
+
+                <div class="actions">
+                    <select name="status"
+                            id="status-<?= (int) $material['id'] ?>">
+                        <option value="pending"
+                            <?= $material['status'] === 'pending' ? 'selected' : '' ?>>
+                            Pending
+                        </option>
+                        <option value="approved"
+                            <?= $material['status'] === 'approved' ? 'selected' : '' ?>>
+                            Approved
+                        </option>
+                        <option value="rejected"
+                            <?= $material['status'] === 'rejected' ? 'selected' : '' ?>>
+                            Rejected
+                        </option>
+                    </select>
+
+                    <button type="submit">Save decision</button>
+                </div>
+            </form>
+        </article>
+    <?php endforeach; ?>
+</main>
+</body>
+</html>
