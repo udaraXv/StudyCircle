@@ -214,11 +214,6 @@ The final submission will include:
 
 - ## Live Website
 
-[Visit NSBM StudyCircle](https://nsbm-studycircle.freedev.app/index.php)
+[Visit NSBM StudyCircle](https://studycircle.free.je/)
 
 Create a student account to explore the website.
-
-### Recent interface update
-- Internal pages now use clearer back buttons.
-- Authenticated users have a profile icon and account-details page.
-- This update does not require a database migration.
