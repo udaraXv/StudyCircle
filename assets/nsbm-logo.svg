@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title desc">
+  <title id="title">NSBM Green University Town</title>
+  <desc id="desc">NSBM Green University Town logo inspired by the university's green and blue brand identity.</desc>
+  <g transform="translate(4 8)">
+    <path d="M20 54C42 20 77 8 112 22c23 9 38 25 52 46-25-4-43 4-57 20-18 20-42 31-69 32 7-22 0-42-18-66z" fill="#43b94f"/>
+    <path d="M74 18c24-9 50-3 72 16 16 14 24 31 27 52-25-15-48-18-69-9-21 9-38 24-55 45 0-25 5-48 25-70z" fill="#1d5fa7" opacity=".96"/>
+    <path d="M72 51c21-9 43-5 64 9 14 10 25 23 35 39-26-7-49-5-67 6-15 9-28 22-41 39-5-24-2-49 9-70z" fill="#39b54a"/>
+    <circle cx="159" cy="20" r="5" fill="#4fc3c8"/><circle cx="173" cy="28" r="5" fill="#43b94f"/><circle cx="184" cy="39" r="5" fill="#1d5fa7"/><circle cx="191" cy="52" r="4" fill="#43b94f"/>
+  </g>
+  <text x="190" y="62" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="800" fill="#1d5fa7">NSBM</text>
+  <text x="190" y="98" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="700" fill="#39b54a">GREEN UNIVERSITY</text>
+  <text x="190" y="126" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#1d5fa7" letter-spacing="2">TOWN</text>
+</svg>
