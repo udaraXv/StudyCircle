@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+<title id="title">Green university study space</title>
+<desc id="desc">A clean green campus-inspired illustration with trees, a university building, books and students studying.</desc>
+<defs>
+  <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#dff7e8"/><stop offset="1" stop-color="#f7fcf8"/></linearGradient>
+  <linearGradient id="hill" x1="0" x2="1"><stop stop-color="#2f9b62"/><stop offset="1" stop-color="#157347"/></linearGradient>
+</defs>
+<rect width="900" height="520" rx="28" fill="url(#sky)"/>
+<circle cx="760" cy="100" r="48" fill="#b9e8c9"/>
+<path d="M0 355 Q170 245 340 345 T650 315 T900 325 V520 H0Z" fill="url(#hill)"/>
+<path d="M0 395 Q210 320 390 390 T720 365 T900 385 V520 H0Z" fill="#0f5f3b" opacity=".45"/>
+<rect x="255" y="160" width="390" height="190" rx="10" fill="#ffffff" stroke="#b7d8c3" stroke-width="5"/>
+<path d="M230 165 L450 85 L670 165Z" fill="#166b43"/>
+<rect x="410" y="255" width="80" height="95" rx="4" fill="#e4f4e9"/>
+<g fill="#d2ecdc">
+  <rect x="285" y="205" width="52" height="42" rx="4"/><rect x="355" y="205" width="52" height="42" rx="4"/>
+  <rect x="493" y="205" width="52" height="42" rx="4"/><rect x="563" y="205" width="52" height="42" rx="4"/>
+</g>
+<g fill="#167346">
+  <circle cx="135" cy="255" r="42"/><rect x="127" y="290" width="16" height="70" rx="8"/>
+  <circle cx="760" cy="260" r="48"/><rect x="752" y="300" width="16" height="70" rx="8"/>
+</g>
+<g fill="#fff" stroke="#0f5f3b" stroke-width="4">
+  <circle cx="360" cy="415" r="17"/><circle cx="530" cy="415" r="17"/>
+</g>
+<path d="M340 435 l-24 58 h88 l-24-58z M510 435 l-24 58 h88 l-24-58z" fill="#0f5f3b"/>
+<rect x="350" y="452" width="95" height="16" rx="8" fill="#f4c95d"/>
+<rect x="480" y="452" width="95" height="16" rx="8" fill="#f4c95d"/>
+<text x="450" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#155b39">LEARN • SHARE • GROW</text>
+</svg>
